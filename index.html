@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PathFinder AI — จำลองการค้นหาเส้นทางด้วย AI Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28"><path d="M5 26 L5 16 L16 16 L16 6 L27 6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="26" r="3.5" fill="#22c55e"/><circle cx="27" cy="6" r="3.5" fill="#ef4444"/></svg>
+      </div>
+      <div>
+        <h1>PathFinder AI</h1>
+        <p class="tagline">โปรแกรมจำลองการค้นหาเส้นทางด้วย AI Search — BFS · DFS · UCS · Greedy · A*</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="board-panel">
+      <div class="toolbar">
+        <div class="group">
+          <label for="algo">อัลกอริทึม</label>
+          <select id="algo"></select>
+        </div>
+        <div class="group">
+          <label for="heuristic">ฮิวริสติก h(n)</label>
+          <select id="heuristic"></select>
+        </div>
+        <div class="group speed">
+          <label for="speed">ความเร็ว <span id="speedLabel"></span></label>
+          <input id="speed" type="range" min="1" max="10" value="6">
+        </div>
+        <div class="group actions">
+          <button id="runBtn" class="btn primary">▶ ค้นหา</button>
+          <button id="compareBtn" class="btn">⇄ เปรียบเทียบทั้งหมด</button>
+        </div>
+      </div>
+
+      <div class="toolbar secondary">
+        <div class="tools" role="radiogroup" aria-label="เครื่องมือวาด">
+          <span class="tools-label">วาด:</span>
+          <button class="tool active" data-tool="wall" role="radio" aria-checked="true"><i class="sw wall"></i>กำแพง</button>
+          <button class="tool" data-tool="weight" role="radio" aria-checked="false"><i class="sw weight"></i>โคลน (ต้นทุน 5)</button>
+          <button class="tool" data-tool="erase" role="radio" aria-checked="false"><i class="sw empty"></i>ยางลบ</button>
+        </div>
+        <div class="tools">
+          <button id="mazeBtn" class="btn small">🧩 สร้างเขาวงกต</button>
+          <button id="randomBtn" class="btn small">🎲 สุ่มสิ่งกีดขวาง</button>
+          <button id="clearPathBtn" class="btn small ghost">ล้างผลค้นหา</button>
+          <button id="clearAllBtn" class="btn small ghost">ล้างทั้งหมด</button>
+        </div>
+      </div>
+
+      <div class="grid-wrap">
+        <div id="grid" class="grid" aria-label="แผนที่"></div>
+      </div>
+
+      <div class="legend">
+        <span><i class="sw start"></i>จุดเริ่มต้น (ลากย้ายได้)</span>
+        <span><i class="sw goal"></i>เป้าหมาย (ลากย้ายได้)</span>
+        <span><i class="sw wall"></i>กำแพง</span>
+        <span><i class="sw weight"></i>โคลน</span>
+        <span><i class="sw visited"></i>ช่องที่สำรวจแล้ว</span>
+        <span><i class="sw path"></i>เส้นทางที่พบ</span>
+      </div>
+      <p class="hint">คลิกหรือลากบนแผนที่เพื่อวาด · ลากจุดเขียว/แดงเพื่อย้าย · หลังค้นหาแล้ว แก้แผนที่ได้ ผลจะคำนวณใหม่ทันที · กด <kbd>Space</kbd> เพื่อค้นหา</p>
+    </section>
+
+    <aside class="side-panel">
+      <div class="card">
+        <div class="status" id="status">พร้อมค้นหา</div>
+        <div class="stats">
+          <div class="stat"><span class="num" id="statExpanded">–</span><span class="lbl">ช่องที่สำรวจ</span></div>
+          <div class="stat"><span class="num" id="statSteps">–</span><span class="lbl">จำนวนก้าว</span></div>
+          <div class="stat"><span class="num" id="statCost">–</span><span class="lbl">ต้นทุนรวม</span></div>
+          <div class="stat"><span class="num" id="statTime">–</span><span class="lbl">เวลาคำนวณ (ms)</span></div>
+        </div>
+      </div>
+
+      <div class="card info" id="info"></div>
+    </aside>
+
+    <section class="card compare" id="compareSection" hidden>
+      <div class="compare-head">
+        <h2>ผลเปรียบเทียบบนแผนที่เดียวกัน</h2>
+        <p id="compareSummary" class="summary"></p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>อัลกอริทึม</th>
+              <th>ช่องที่สำรวจ</th>
+              <th>จำนวนก้าว</th>
+              <th>ต้นทุนรวม</th>
+              <th>เวลา (ms)</th>
+              <th>ทางที่ดีที่สุด?</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="compareBody"></tbody>
+        </table>
+      </div>
+      <p class="note">“ทางที่ดีที่สุด” = ต้นทุนรวมเท่ากับของ UCS ซึ่งรับประกันต้นทุนต่ำสุดเสมอ</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Mini-Project รายวิชา 632219 ปัญญาประดิษฐ์ · จัดทำโดย <span id="author">Peeraphat Aisising รหัสนักศึกษา 6752410001</span>
+  </footer>
+
+  <script src="js/algorithms.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "pathfinder-ai",
+  "version": "1.0.0",
+  "description": "โปรแกรมจำลองการค้นหาเส้นทางด้วย AI Search (BFS, DFS, UCS, Greedy, A*)",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
